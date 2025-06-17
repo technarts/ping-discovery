@@ -1,4 +1,4 @@
-module pingdiscovery
+module github.com/technarts/ping-discovery
 
 go 1.24.0
 
