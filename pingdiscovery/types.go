@@ -6,6 +6,11 @@ import (
 )
 
 type LoggerFunc func(format string, v ...any)
+
+type ReadMessagesFunc func(server, topic string) ([]KafkaIpRetryTimeoutMessage, error)
+
+type PostResultsFunc func(server, writeTopic, signalTopic string, results map[int]bool) error
+
 type IPTask struct {
 	ID         int    `json:"id"`
 	IP         string `json:"ip_address"`
@@ -26,6 +31,10 @@ type PingDiscoveryService struct {
 	logger       LoggerFunc
 	workerCount  int
 	loopInterval int
+
+	// Datas Read and write functions
+	readData   ReadMessagesFunc
+	postResult PostResultsFunc
 
 	// Add these for graceful shutdown
 	ctx    context.Context

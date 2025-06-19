@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func NewPingDiscoveryService(args []string, workerCount int, loopInterval int, logger LoggerFunc) *PingDiscoveryService {
+func NewPingDiscoveryService(args []string, workerCount int, loopInterval int, logger LoggerFunc, reader ReadMessagesFunc, poster PostResultsFunc) *PingDiscoveryService {
 	if len(args) < 4 {
 		logger("Usage: ./discovery ping-service <bootstrap-server[:port]> <topic-to-read> <topic-to-write> <topic-to-signal>\n")
 		os.Exit(1)
@@ -23,6 +23,8 @@ func NewPingDiscoveryService(args []string, workerCount int, loopInterval int, l
 		signalTopic:  args[3],
 		workerCount:  workerCount,
 		loopInterval: loopInterval,
+		readData:     reader,
+		postResult:   poster,
 		logger:       logger,
 		ctx:          ctx,
 		cancel:       cancel,
@@ -113,22 +115,18 @@ func (s *PingDiscoveryService) processPingDiscovery() error {
 }
 
 func (s *PingDiscoveryService) postPingResults(ipSuccessMap map[int]bool) error {
-	// Use your existing Kafka producer implementation
-	// postPingResults(s.server, s.writeTopic, s.signalTopic, ipSuccessMap)
-	return nil
+	return s.postResult(s.server, s.writeTopic, s.signalTopic, ipSuccessMap)
 }
 
 func (s *PingDiscoveryService) readIPRetryTimeoutMessages() ([]KafkaIpRetryTimeoutMessage, error) {
-	// Use your existing Kafka consumer implementation
-	// messages := readIPRetryTimeoutMessages(s.server, s.readTopic)
-	return nil, nil
+	return s.readData(s.server, s.readTopic)
 }
 
-func PingDiscoveryServiceAllTime(args []string, workerCount int, loopInterval int, logger LoggerFunc) {
+func PingDiscoveryServiceAllTime(args []string, workerCount int, loopInterval int, logger LoggerFunc, reader ReadMessagesFunc, poster PostResultsFunc) {
 	if logger == nil {
 		logger = func(string, ...any) {}
 	}
 
-	service := NewPingDiscoveryService(args, workerCount, loopInterval, logger)
+	service := NewPingDiscoveryService(args, workerCount, loopInterval, logger, reader, poster)
 	service.Start()
 }
