@@ -12,8 +12,6 @@ const (
 	StatusUnavailable = "UNAVAILABLE"
 )
 
-type LoggerFunc func(format string, v ...any)
-
 func RunPingDiscovery(tasks []IPTask, workerCount int, logger LoggerFunc) []PingResult {
 	if logger == nil {
 		logger = func(string, ...any) {}
