@@ -10,19 +10,17 @@ import (
 
 func NewPingDiscoveryService(args []string, workerCount int, loopInterval int, logger LoggerFunc, reader ReadMessagesFunc, poster PostResultsFunc) *PingDiscoveryService {
 	if len(args) < 4 {
-		logger("Usage: ./discovery ping-service <bootstrap-server[:port]> <topic-to-read> <topic-to-write> <topic-to-signal>\n")
+		logger("Usage: ./discovery ping-service <arg1> <arg2> <arg3> <arg4>\n")
+		logger("Args meaning depends on your implementation (e.g., server, topics, queues, files, etc.)\n")
 		os.Exit(1)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &PingDiscoveryService{
-		server:       args[0],
-		readTopic:    args[1],
-		writeTopic:   args[2],
-		signalTopic:  args[3],
 		workerCount:  workerCount,
 		loopInterval: loopInterval,
+		originalArgs: args, // store all args for flexible usage
 		readData:     reader,
 		postResult:   poster,
 		logger:       logger,
@@ -33,6 +31,7 @@ func NewPingDiscoveryService(args []string, workerCount int, loopInterval int, l
 
 func (s *PingDiscoveryService) Start() {
 	s.logger("PING DISCOVERY SERVICE STARTED - Running 24/7\n")
+	s.logger("Using args: %v\n", s.originalArgs)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -115,11 +114,11 @@ func (s *PingDiscoveryService) processPingDiscovery() error {
 }
 
 func (s *PingDiscoveryService) postPingResults(ipSuccessMap map[int]bool) error {
-	return s.postResult(s.server, s.writeTopic, s.signalTopic, ipSuccessMap)
+	return s.postResult(s.originalArgs, ipSuccessMap)
 }
 
 func (s *PingDiscoveryService) readIPRetryTimeoutMessages() ([]KafkaIpRetryTimeoutMessage, error) {
-	return s.readData(s.server, s.readTopic)
+	return s.readData(s.originalArgs)
 }
 
 func PingDiscoveryServiceAllTime(args []string, workerCount int, loopInterval int, logger LoggerFunc, reader ReadMessagesFunc, poster PostResultsFunc) {

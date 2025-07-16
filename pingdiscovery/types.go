@@ -7,9 +7,9 @@ import (
 
 type LoggerFunc func(format string, v ...any)
 
-type ReadMessagesFunc func(server, topic string) ([]KafkaIpRetryTimeoutMessage, error)
+type ReadMessagesFunc func(args []string) ([]KafkaIpRetryTimeoutMessage, error)
 
-type PostResultsFunc func(server, writeTopic, signalTopic string, results map[int]bool) error
+type PostResultsFunc func(args []string, results map[int]bool) error
 
 type IPTask struct {
 	ID         int    `json:"id"`
@@ -24,19 +24,18 @@ type PingResult struct {
 }
 
 type PingDiscoveryService struct {
-	server       string
-	readTopic    string
-	writeTopic   string
-	signalTopic  string
 	logger       LoggerFunc
 	workerCount  int
 	loopInterval int
 
-	// Datas Read and write functions
+	// Store original args for flexible parameter passing
+	originalArgs []string
+
+	// Data read and write functions
 	readData   ReadMessagesFunc
 	postResult PostResultsFunc
 
-	// Add these for graceful shutdown
+	// Graceful shutdown support
 	ctx    context.Context
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
@@ -47,4 +46,9 @@ type KafkaIpRetryTimeoutMessage struct {
 	IP         string `json:"ip_address"`
 	RetryCount int    `json:"retry_count"`
 	Timeout    int    `json:"timeout"`
+}
+
+// Get all args for flexible usage
+func (s *PingDiscoveryService) GetArgs() []string {
+	return s.originalArgs
 }
