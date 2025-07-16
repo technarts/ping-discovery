@@ -130,3 +130,23 @@ func PingDiscoveryServiceAllTime(args []string, workerCount int, loopInterval in
 	service := NewPingDiscoveryService(args, workerCount, loopInterval, logger, reader, poster)
 	service.Start()
 }
+
+// optional >> helper function for one-shot execution
+func RunPingDiscoveryOnce(args []string, workerCount int, logger LoggerFunc, reader ReadMessagesFunc, poster PostResultsFunc) error {
+	if logger == nil {
+		logger = func(string, ...any) {}
+	}
+
+	service := &PingDiscoveryService{
+		workerCount:  workerCount,
+		loopInterval: 0,
+		originalArgs: args,
+		readData:     reader,
+		postResult:   poster,
+		logger:       logger,
+		ctx:          context.Background(),
+	}
+
+	// Run once and return
+	return service.processPingDiscovery()
+}
